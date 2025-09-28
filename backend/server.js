@@ -1,8 +1,12 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { sql } from './config/db.js';
+import rateLimiter from './middleware/rateLimiter.js';
 
 const app = express();
+
+// Trust proxy to get real IP addresses (important for rate limiting)
+app.set('trust proxy', true);
 
 // this will act as our middleware. it will parse the incoming request body
 app.use(express.json());
@@ -43,7 +47,7 @@ app.get("/", (req, res) => {
     res.send("Hello World");
 })
 
-app.post("/api/transactions", async (req, res) => {
+app.post("/api/transactions", rateLimiter, async (req, res) => {
     // a title would consist of the title, category, amount, user_id
     try {
         const { title, amount, category, user_id } = req.body;
@@ -65,7 +69,7 @@ app.post("/api/transactions", async (req, res) => {
     }
 });
 
-app.get("/api/transactions/:userId", async (req, res) => {
+app.get("/api/transactions/:userId", rateLimiter, async (req, res) => {
     try {
         const { userId } = req.params;
         const transactions = await sql`
@@ -127,8 +131,6 @@ app.get("/api/transactions/summary/:userId", async (req, res) => {
             income: incomeResult[0].income,
             expenses: expensesResult[0].expenses,
         });
-
-        res.status(200).json({ summary: summary[0] });
     }
     catch (error) {
         console.error("Error fetching transaction summary:", error);
