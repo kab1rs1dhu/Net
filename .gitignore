@@ -1,5 +1,18 @@
-node_modules
-build
-npm-debug.log
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store # macOS specific
 .env
-.DS_Store
+.idea/ # IDE specific (IntelliJ)
+.vscode/ # IDE specific (VS Code)
+coverage/
+dist/
+build/
+*.log
+*.tgz
+*.zip
+pids/
+logs/
+.nyc_output/
