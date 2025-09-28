@@ -4,7 +4,10 @@ import { sql } from './config/db.js';
 
 const app = express();
 
-const PORT = process.env.PORT || 5001;
+// this will act as our middleware. it will parse the incoming request body
+app.use(express.json());
+
+const PORT = process.env.PORT || 5001;  
 
 async function initializeDatabase() {
     try {
@@ -39,6 +42,28 @@ async function initializeDatabase() {
 app.get("/",(req,res)=>{
     res.send("Hello World");
 })
+
+app.post("/api/transactions",async(req,res)=>{
+    // a title would consist of the title, category, amount, user_id
+    try {
+        const {title, amount, category, user_id} = req.body;
+        if(!title || amount === undefined || !category || !user_id){
+            return res.status(400).json({message: "Bad request: All fields are required"});
+        }
+
+        const transaction= await sql`
+            INSERT INTO transactions (user_id, title, amount, category)
+            VALUES (${user_id}, ${title}, ${amount}, ${category})
+            RETURNING *
+        `
+
+        res.status(201).json({message: "Transaction created successfully"});
+
+    } catch (error) {
+        console.error("Error creating transaction:", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
 
 initializeDatabase().then(() => {
     app.listen(PORT, () => {
