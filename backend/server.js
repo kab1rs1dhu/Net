@@ -65,6 +65,45 @@ app.post("/api/transactions",async(req,res)=>{
     }
 });
 
+app.get("/api/transactions/:userId", async(req,res)=>{
+    try {
+        const {userId} = req.params;
+        const transactions = await sql`
+            SELECT * FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC
+        `;
+        
+        // no need to handle the case where there are no transactions, just return an empty array
+        // as a new user will not have any transactions
+        res.status(200).json({transactions});
+
+
+    } catch (error) {
+        console.error("Error fetching transactions:", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
+
+app.delete("/api/transactions/:id", async(req,res)=>{
+    try {
+        const {id} = req.params;
+        const result = await sql`
+            DELETE FROM transactions WHERE id = ${id} RETURNING *
+        `;
+        
+        // result will have a count property that tells us how many rows were affected
+        if(result.length === 0){
+            return res.status(404).json({message: "Transaction not found"});
+        }
+        res.status(200).json({message: "Transaction deleted successfully"});
+
+    }
+    catch (error) {
+        console.error("Error deleting transaction:", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
 initializeDatabase().then(() => {
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
