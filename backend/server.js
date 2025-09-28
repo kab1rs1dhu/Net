@@ -9,6 +9,7 @@ const app = express();
 app.set('trust proxy', true);
 
 // this will act as our middleware. it will parse the incoming request body
+app.use(rateLimiter);
 app.use(express.json());
 
 const PORT = process.env.PORT || 5001;
@@ -47,7 +48,7 @@ app.get("/", (req, res) => {
     res.send("Hello World");
 })
 
-app.post("/api/transactions", rateLimiter, async (req, res) => {
+app.post("/api/transactions", async (req, res) => {
     // a title would consist of the title, category, amount, user_id
     try {
         const { title, amount, category, user_id } = req.body;
@@ -69,7 +70,7 @@ app.post("/api/transactions", rateLimiter, async (req, res) => {
     }
 });
 
-app.get("/api/transactions/:userId", rateLimiter, async (req, res) => {
+app.get("/api/transactions/:userId",async (req, res) => {
     try {
         const { userId } = req.params;
         const transactions = await sql`
