@@ -10,4 +10,6 @@ router.get("/summary/:userId", getSummaryByUserID);  // Move summary route befor
 router.get("/:userId", getTransactionByUserID);
 router.delete("/:id", deleteTransaction);  // Change from :userId to :id
 
+// need to change routes to have a more consistent naming convention. ignore for now
+
 export default router;
