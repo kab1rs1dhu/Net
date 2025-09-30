@@ -6,8 +6,8 @@ import { getSummaryByUserID } from "../controllers/transactionController.js";
 
 const router = express.Router();
 router.post("/", createTransaction);
+router.get("/summary/:userId", getSummaryByUserID);  // Move summary route before the generic :userId route
 router.get("/:userId", getTransactionByUserID);
-router.get("/:userId/summary", getSummaryByUserID);
-router.delete("/:userId", deleteTransaction);
+router.delete("/:id", deleteTransaction);  // Change from :userId to :id
 
 export default router;
