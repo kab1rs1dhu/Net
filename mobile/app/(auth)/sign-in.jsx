@@ -19,10 +19,23 @@ export default function Page() {
   const onSignInPress = async () => {
     if (!isLoaded) return;
 
+    // Basic validation
+    if (!emailAddress || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
+    if (!emailAddress.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setError(""); // Clear any previous errors
+
     // Start the sign-in process using the email and password provided
     try {
       const signInAttempt = await signIn.create({
-        identifier: emailAddress,
+        identifier: emailAddress.trim(),
         password,
       });
 
@@ -34,13 +47,29 @@ export default function Page() {
       } else {
         // If the status isn't complete, check why. User might need to
         // complete further steps.
-        console.error(JSON.stringify(signInAttempt, null, 2));
+        console.error("Sign-in incomplete:", JSON.stringify(signInAttempt, null, 2));
+        setError("Sign-in process incomplete. Please try again.");
       }
     } catch (err) {
-      if (err.errors?.[0]?.code === "form_password_incorrect") {
+      console.error("Error signing in:", err);
+      
+      const errorCode = err.errors?.[0]?.code;
+      const errorMessage = err.errors?.[0]?.longMessage || err.errors?.[0]?.message;
+      
+      if (errorCode === "form_password_incorrect") {
         setError("Password is incorrect. Please try again.");
+      } else if (errorCode === "form_password_pwned") {
+        setError("This password has been found in a data breach. Please use a different, more secure password.");
+      } else if (errorMessage?.includes("CAPTCHA")) {
+        setError("Security verification failed. Please try refreshing the page or using a different browser.");
+      } else if (errorCode === "form_identifier_not_found") {
+        setError("No account found with this email address.");
+      } else if (errorCode === "form_param_format_invalid") {
+        setError("Please check your email format and try again.");
+      } else if (errorCode === "session_token_and_uat_header_missing") {
+        setError("Authentication error. Please restart the app and try again.");
       } else {
-        setError("An error occurred. Please try again.");
+        setError(errorMessage || "An error occurred. Please try again.");
       }
     }
   };
