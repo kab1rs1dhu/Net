@@ -14,6 +14,7 @@ import { API_URL } from "../../constants/api";
 import { styles } from "../../assets/styles/create.styles";
 import { COLORS } from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, { FadeInDown, FadeIn, useAnimatedStyle, withSpring, useSharedValue } from "react-native-reanimated";
 
 const CATEGORIES = [
   { id: "food", name: "Food & Drinks", icon: "fast-food" },
@@ -24,6 +25,47 @@ const CATEGORIES = [
   { id: "income", name: "Income", icon: "cash" },
   { id: "other", name: "Other", icon: "ellipsis-horizontal" },
 ];
+
+const AnimatedCategoryButton = ({ category, selectedCategory, onPress, index }) => {
+  const scale = useSharedValue(1);
+  const isSelected = selectedCategory === category.name;
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeIn.delay(index * 50).duration(300)}
+      style={animatedStyle}
+    >
+      <TouchableOpacity
+        style={[
+          styles.categoryButton,
+          isSelected && styles.categoryButtonActive,
+        ]}
+        onPress={onPress}
+        onPressIn={() => (scale.value = withSpring(0.95))}
+        onPressOut={() => (scale.value = withSpring(1))}
+      >
+        <Ionicons
+          name={category.icon}
+          size={20}
+          color={isSelected ? COLORS.white : COLORS.text}
+          style={styles.categoryIcon}
+        />
+        <Text
+          style={[
+            styles.categoryButtonText,
+            isSelected && styles.categoryButtonTextActive,
+          ]}
+        >
+          {category.name}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 
 const CreateScreen = () => {
   const router = useRouter();
@@ -84,7 +126,10 @@ const CreateScreen = () => {
   return (
     <View style={styles.container}>
       {/* HEADER */}
-      <View style={styles.header}>
+      <Animated.View 
+        entering={FadeIn.duration(300)}
+        style={styles.header}
+      >
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
@@ -97,9 +142,12 @@ const CreateScreen = () => {
           <Text style={styles.saveButton}>{isLoading ? "Saving..." : "Save"}</Text>
           {!isLoading && <Ionicons name="checkmark" size={18} color={COLORS.primary} />}
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
-      <View style={styles.card}>
+      <Animated.View 
+        entering={FadeInDown.delay(100).duration(400).springify()}
+        style={styles.card}
+      >
         <View style={styles.typeSelector}>
           {/* EXPENSE SELECTOR */}
           <TouchableOpacity
@@ -170,33 +218,17 @@ const CreateScreen = () => {
         </Text>
 
         <View style={styles.categoryGrid}>
-          {CATEGORIES.map((category) => (
-            <TouchableOpacity
+          {CATEGORIES.map((category, index) => (
+            <AnimatedCategoryButton
               key={category.id}
-              style={[
-                styles.categoryButton,
-                selectedCategory === category.name && styles.categoryButtonActive,
-              ]}
+              category={category}
+              selectedCategory={selectedCategory}
               onPress={() => setSelectedCategory(category.name)}
-            >
-              <Ionicons
-                name={category.icon}
-                size={20}
-                color={selectedCategory === category.name ? COLORS.white : COLORS.text}
-                style={styles.categoryIcon}
-              />
-              <Text
-                style={[
-                  styles.categoryButtonText,
-                  selectedCategory === category.name && styles.categoryButtonTextActive,
-                ]}
-              >
-                {category.name}
-              </Text>
-            </TouchableOpacity>
+              index={index}
+            />
           ))}
         </View>
-      </View>
+      </Animated.View>
 
       {isLoading && (
         <View style={styles.loadingContainer}>
