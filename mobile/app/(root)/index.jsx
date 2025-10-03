@@ -10,11 +10,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { BalanceCard } from "../../components/BalanceCard";
 import { TransactionItem } from "../../components/TransactionItem";
 import NoTransactionsFound from "../../components/NoTransactionsFound";
+import Animated, { FadeIn, FadeInDown, useAnimatedStyle, withSpring, useSharedValue } from "react-native-reanimated";
 
 export default function Page() {
   const { user } = useUser();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const addButtonScale = useSharedValue(1);
 
   const { transactions, summary, isLoading, loadData, deleteTransaction } = useTransactions(
     user.id
@@ -37,13 +39,20 @@ export default function Page() {
     ]);
   };
 
+  const addButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: addButtonScale.value }],
+  }));
+
   if (isLoading && !refreshing) return <PageLoader />;
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         {/* HEADER */}
-        <View style={styles.header}>
+        <Animated.View 
+          entering={FadeIn.duration(400)}
+          style={styles.header}
+        >
           {/* LEFT */}
           <View style={styles.headerLeft}>
             <Image
@@ -60,19 +69,29 @@ export default function Page() {
           </View>
           {/* RIGHT */}
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.addButton} onPress={() => router.push("/create")}>
-              <Ionicons name="add" size={20} color="#FFF" />
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
+            <Animated.View style={addButtonAnimatedStyle}>
+              <TouchableOpacity 
+                style={styles.addButton} 
+                onPress={() => router.push("/create")}
+                onPressIn={() => (addButtonScale.value = withSpring(0.95))}
+                onPressOut={() => (addButtonScale.value = withSpring(1))}
+              >
+                <Ionicons name="add" size={20} color="#FFF" />
+                <Text style={styles.addButtonText}>Add</Text>
+              </TouchableOpacity>
+            </Animated.View>
             <SignOutButton />
           </View>
-        </View>
+        </Animated.View>
 
         <BalanceCard summary={summary} />
 
-        <View style={styles.transactionsHeaderContainer}>
+        <Animated.View 
+          entering={FadeInDown.delay(300).duration(400)}
+          style={styles.transactionsHeaderContainer}
+        >
           <Text style={styles.sectionTitle}>Recent Transactions</Text>
-        </View>
+        </Animated.View>
       </View>
 
       {/* FlatList is a performant way to render long lists in React Native. */}
@@ -81,7 +100,7 @@ export default function Page() {
         style={styles.transactionsList}
         contentContainerStyle={styles.transactionsListContent}
         data={transactions}
-        renderItem={({ item }) => <TransactionItem item={item} onDelete={handleDelete} />}
+        renderItem={({ item, index }) => <TransactionItem item={item} onDelete={handleDelete} index={index} />}
         ListEmptyComponent={<NoTransactionsFound />}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
